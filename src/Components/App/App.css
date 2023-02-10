@@ -1,0 +1,23 @@
+.App{
+  display: flex;
+  
+
+}
+
+.imgLeft{
+  width: 50%;
+  height: 100vh;
+ background-color: cadetblue;
+}
+
+.calculator-container{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 50%;
+  height: 100vh;
+  background-color: #f5f5f5;
+}
+
+
