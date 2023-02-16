@@ -1,7 +1,7 @@
 import "./App.css";
-
+import React from "react";
 import Input from "../Input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 function App() {
   const [cost, setCost] = useState(0);
@@ -51,27 +51,33 @@ function App() {
     setEndLat(data.features[0].properties.lat);
   }
 
-  async function fetchDistance(startLat, startLon, endLat, endLon) {
-    const response = await fetch(
-      `https://trueway-matrix.p.rapidapi.com/CalculateDrivingMatrix?origins=${startLat}%2C${startLon}&destinations=${endLat}%2C${endLon}`,
-      {
-        method: "GET",
-        headers: {
-          "X-RapidAPI-Key":
-            "33a69046d1msh2b7978ec110ac74p164745jsn199819eb8658",
-          "X-RapidAPI-Host": "trueway-matrix.p.rapidapi.com"
+  useEffect(() => {
+    async function fetchDistance(startLat, startLon, endLat, endLon) {
+      const response = await fetch(
+        `https://trueway-matrix.p.rapidapi.com/CalculateDrivingMatrix?origins=${startLat}%2C${startLon}&destinations=${endLat}%2C${endLon}`,
+        {
+          method: "GET",
+          headers: {
+            "X-RapidAPI-Key":
+              "33a69046d1msh2b7978ec110ac74p164745jsn199819eb8658",
+            "X-RapidAPI-Host": "trueway-matrix.p.rapidapi.com"
+          }
         }
-      }
-    );
-    const data = await response.json();
-    let milesDistance = data.distances[0][0];
-    setDistance(milesDistance * 0.0006213712);
-  }
+      );
+      const data = await response.json();
+      let milesDistance = data.distances[0][0];
 
+      setDistance(milesDistance * 0.0006213712);
+    }
+    fetchDistance(startLat, startLon, endLat, endLon);
+  }, [startLat, startLon, endLat, endLon]);
+
+  function handleDistance(e) {
+    setDistance(e.target.value);
+  }
   function grabLocation() {
     fetchStartLocation();
     fetchEndLocation();
-    fetchDistance(startLat, startLon, endLat, endLon);
   }
 
   console.log("distance:", startLat, startLon, endLat, endLon, distance);
@@ -80,21 +86,20 @@ function App() {
     setFuelPrice(e.target.value);
   }
 
-  function handleDistance(e) {
-    setDistance(e.target.value);
-  }
-
   function handleMpg(e) {
     setMpgToLiters((282.48 / e.target.value).toFixed(2));
   }
 
-  async function calculate() {
-    setCost(
-      ((fuelPrice / 100) * ((distance * 1.609344 * mpgToLiters) / 100)).toFixed(
-        2
-      )
-    );
-    setLiters(((distance * 1.609344 * mpgToLiters) / 100).toFixed(2));
+  function calculate() {
+    if (fuelPrice && distance && mpgToLiters) {
+      setCost(
+        (
+          (fuelPrice / 100) *
+          ((distance * 1.609344 * mpgToLiters) / 100)
+        ).toFixed(2)
+      );
+      setLiters(((distance * 1.609344 * mpgToLiters) / 100).toFixed(2));
+    }
   }
 
   return (
@@ -110,11 +115,11 @@ function App() {
           handleChange={(e) => setEndPostcode(e.target.value)}
         />
         <button onClick={grabLocation}>Calculate distance</button>
-        <p>Distance: {distance} miles</p>
+        <p>Distance: {distance.toFixed(2)} miles</p>
         <Input
           type="number"
           value={fuelPrice}
-          placeholder="Fuel price - pense/ litre"
+          placeholder="Fuel price - pence/ litre"
           handleChange={handleFuelPrice}
         />
         <Input
