@@ -1,140 +1,396 @@
 import "./App.css";
-import React from "react";
-import Input from "../Input";
-import { useState, useEffect } from "react";
+import React, { useEffect } from "react";
+import { useState } from "react";
+import { GeoapifyGeocoderAutocomplete, GeoapifyContext } from '@geoapify/react-geocoder-autocomplete';
+import '@geoapify/geocoder-autocomplete/styles/minimal.css';
+import MyMap from "../MyMap";
+import distanceIco from "../../distance.png";
+import costIco from "../../cost.png";
+import gaugeIco  from "../../gauge.png";
+import Dashboard from "../Dashboard";
+
+
 
 function App() {
   const [cost, setCost] = useState(0);
-  const [fuelPrice, setFuelPrice] = useState(null);
-  const [distance, setDistance] = useState(0);
-  const [liters, setLiters] = useState(0);
-  const [mpgToLiters, setMpgToLiters] = useState(0);
-
-  const [startPostcode, setStartPostcode] = useState(null);
-  const [endPostcode, setEndPostcode] = useState(null);
+  const [fuelPrice, setFuelPrice] = useState("");
+  const [distanceTotal, setDistanceTotal ] = useState(null);
+  const [litersNeeded, setLitersNeeded] = useState(0);
+  const [mpg, setMpg] = useState("");         
+  const [liters, setLiters] = useState("");   
+  const [unit, setUnit] = useState("mpg");
   const [startLon, setStartLon] = useState(null);
   const [startLat, setStartLat] = useState(null);
   const [endLon, setEndLon] = useState(null);
   const [endLat, setEndLat] = useState(null);
-
-  async function fetchStartLocation() {
-    const response = await fetch(
-      `https://geoapify-address-autocomplete.p.rapidapi.com/v1/geocode/autocomplete?text=${startPostcode}&type=postcode&bias=proximity%3A10.485306%2C48.852565`,
-      {
-        method: "GET",
-        headers: {
-          "X-RapidAPI-Key":
-            "33a69046d1msh2b7978ec110ac74p164745jsn199819eb8658",
-          "X-RapidAPI-Host": "geoapify-address-autocomplete.p.rapidapi.com"
-        }
+  const [startAdress, setStartAddress] = useState("");
+  const [endAdress, setEndAddress] = useState("");
+  const [motorwayDistance, setMotorwayDistance] = useState(0);
+  const [blobClass, setBlobClass] = useState("blob-hidden");
+  const [postcodeKey, setPostcodeKey] = useState(0);
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [fuelType, setFuelType] = useState("PETROL")
+  const [co2Emissions, setCo2Emissions] = useState(0);
+  const [costPerMile, setCostPerMile] = useState(0);
+  const [costMotorwayAt60, setCostMotorwayAt60] = useState(0);
+  const [costMotorwayAt70, setCostMotorwayAt70] = useState(0);
+  const [costMotorwayAt80, setCostMotorwayAt80] = useState(0);
+  const [costNonMotorway, setCostNonMotorway] = useState(0);
+  const [nonMotorwayDistance, setNonMotorwayDistance] = useState(0);
+  
+ 
+  // Handle unit change and conversion
+  function handleUnitChange(newUnit) {
+    if (unit === newUnit) return;
+    // Switch and convert the value
+    if (newUnit === "liters" && mpg !== "") {
+      // Convert to L/100km
+      const newLiters = mpg ? (282.48 / mpg).toFixed(2) : "";
+      setLiters(newLiters);
+    }
+    if (newUnit === "mpg" && liters !== "") {
+      // Convert to MPG
+      const newMpg = liters ? (282.48 / liters).toFixed(2) : "";
+      setMpg(newMpg);
+    }
+    setUnit(newUnit);
+  }
+ 
+  // Handle input change when user types
+  function handleInputChange(e) {
+    const value = e.target.value;
+    if (unit === "mpg") {
+      setMpg(value);
+      // Convert dynamically for sync
+      if (value !== "") {
+        setLiters((282.48 / value).toFixed(2));
+      } else {
+        setLiters("");
       }
-    );
-    const data = await response.json();
-    setStartLon(data.features[0].properties.lon);
-    setStartLat(data.features[0].properties.lat);
+    } else {
+      setLiters(value);
+      if (value !== "") {
+        setMpg((282.48 / value).toFixed(2));
+      } else {
+        setMpg("");
+      }
+    }
   }
 
-  async function fetchEndLocation() {
-    const response = await fetch(
-      `https://geoapify-address-autocomplete.p.rapidapi.com/v1/geocode/autocomplete?text=${endPostcode}&type=postcode&bias=proximity%3A10.485306%2C48.852565`,
-      {
-        method: "GET",
-        headers: {
-          "X-RapidAPI-Key":
-            "33a69046d1msh2b7978ec110ac74p164745jsn199819eb8658",
-          "X-RapidAPI-Host": "geoapify-address-autocomplete.p.rapidapi.com"
-        }
-      }
-    );
-    const data = await response.json();
-    setEndLon(data.features[0].properties.lon);
-    setEndLat(data.features[0].properties.lat);
+console.log(liters)
+ 
+  function handleReset() {
+    setCost(0);
+    setFuelPrice("");
+    setDistanceTotal(null);
+    setLitersNeeded(0);
+    setMpg("");
+    setLiters("");
+    setUnit("mpg");
+    setStartLon(null);
+    setStartLat(null);
+    setEndLon(null);
+    setEndLat(null);
+    setStartAddress("");  
+    setEndAddress("");
+    setMotorwayDistance(0);
+    setBlobClass("blob-hidden");
+    setPostcodeKey(prev => prev + 1);
+    setIsCalculating(false);
+    setMotorwayDistance(0);
+    setCo2Emissions(0);
+    setCostPerMile(0);
+    setCostMotorwayAt60(0);
+    setCostMotorwayAt70(0);
+    setCostMotorwayAt80(0);
+    setCostNonMotorway(0);
+    setNonMotorwayDistance(0);
+
   }
 
   useEffect(() => {
-    async function fetchDistance(startLat, startLon, endLat, endLon) {
-      const response = await fetch(
-        `https://trueway-matrix.p.rapidapi.com/CalculateDrivingMatrix?origins=${startLat}%2C${startLon}&destinations=${endLat}%2C${endLon}`,
-        {
-          method: "GET",
-          headers: {
-            "X-RapidAPI-Key":
-              "33a69046d1msh2b7978ec110ac74p164745jsn199819eb8658",
-            "X-RapidAPI-Host": "trueway-matrix.p.rapidapi.com"
-          }
-        }
-      );
-      const data = await response.json();
-      let milesDistance = data.distances[0][0];
+    
+    const usedLiters = unit === "mpg"
+      ? (mpg !== "" ? (282.48 / mpg) : 0)
+      : (liters !== "" ? liters : 0);
 
-      setDistance(milesDistance * 0.0006213712);
+    if (motorwayDistance === 0 && fuelPrice && distanceTotal && usedLiters) {
+      const distanceKm = (distanceTotal * 1.609344);
+      const litersNeeded = (distanceKm * usedLiters) / 100;
+      setLitersNeeded((litersNeeded).toFixed(2));
+      setCost(((fuelPrice / 100) * litersNeeded).toFixed(2));
+
+      setNonMotorwayDistance((distanceTotal - motorwayDistance).toFixed(2) || distanceTotal);
+      
+      console.log("nm:",nonMotorwayDistance)
+      const petrolCo2 = 8.9;
+      const dieselCo2 = 10.2;
+    
+      let petrolCo2Calculated = ((distanceTotal / mpg) * petrolCo2).toFixed(2);
+      let dieselCo2Calculated = ((distanceTotal / mpg) * dieselCo2).toFixed(2);
+      setCo2Emissions(fuelType === "PETROL" ? petrolCo2Calculated : dieselCo2Calculated);
+
+      // Calculate cost per mile
+      const costPerMileCalculated = ((cost / distanceTotal)).toFixed(2);
+      setCostPerMile(costPerMileCalculated);
     }
-    fetchDistance(startLat, startLon, endLat, endLon);
-  }, [startLat, startLon, endLat, endLon]);
+  
+    if (fuelPrice && distanceTotal && usedLiters && motorwayDistance) {
 
-  function handleDistance(e) {
-    setDistance(e.target.value);
-  }
-  function grabLocation() {
-    fetchStartLocation();
-    fetchEndLocation();
-  }
+      const townMPG = liters * 1.25;
+      const motorwayMPG = liters * 0.75; 
 
-  console.log("distance:", startLat, startLon, endLat, endLon, distance);
+      // Calculate cost motorway
+      
+      const mpgAt60 = motorwayMPG;
+      const mpgAt70 = motorwayMPG * 1.09;
+      const mpgAt80 = motorwayMPG * 1.25;
+
+      const nonMotorwayKm = (distanceTotal * 1.609344) - (motorwayDistance * 1.609344);
+      setNonMotorwayDistance((nonMotorwayKm/1.609344).toFixed(2)); // Set nonMotorwayDistance
+      const nonMotorwayLiters = (nonMotorwayKm * townMPG) / 100;
+      setCostNonMotorway((fuelPrice / 100) * nonMotorwayLiters);
+
+       
+
+      const motorwayKm = motorwayDistance * 1.609344;
+      const litersMotorwayAt60 = (motorwayKm * mpgAt60) / 100;
+      const litersMotorwayAt70 = (motorwayKm * mpgAt70) / 100;
+      const litersMotorwayAt80 = (motorwayKm * mpgAt80) / 100;
+      setCostMotorwayAt60((fuelPrice / 100) * litersMotorwayAt60);
+      setCostMotorwayAt70((fuelPrice / 100) * litersMotorwayAt70);
+      setCostMotorwayAt80((fuelPrice / 100) * litersMotorwayAt80);
+      
+
+      // Calculate total cost
+      
+      // const totalLiters = (litersMotorwayAt70 + nonMotorwayLiters);  
+      setLitersNeeded((litersMotorwayAt70 + nonMotorwayLiters).toFixed(2));
+      setCost(((fuelPrice / 100) * litersNeeded).toFixed(2));
+
+      
+      // Calculate CO2 emissions
+      const petrolCo2 = 8.9;
+      const dieselCo2 = 10.2;
+    
+      let petrolCo2Calculated = ((distanceTotal / mpg) * petrolCo2).toFixed(2);
+      let dieselCo2Calculated = ((distanceTotal / mpg) * dieselCo2).toFixed(2);
+      setCo2Emissions(fuelType === "PETROL" ? petrolCo2Calculated : dieselCo2Calculated);
+
+      // Calculate cost per mile
+      const costPerMileCalculated = ((cost / distanceTotal)).toFixed(2);
+      setCostPerMile(costPerMileCalculated);
+
+    }
+   
+  }, [distanceTotal, fuelPrice, mpg, liters, unit, co2Emissions, fuelType, cost, motorwayDistance, nonMotorwayDistance, costMotorwayAt60, costMotorwayAt70, costMotorwayAt80, costNonMotorway, litersNeeded]);
+
+  useEffect(() => {
+    if (fuelPrice && mpg) {
+      setBlobClass("blob");
+      setIsCalculating(true);
+    }
+    if (fuelPrice && liters && cost && distanceTotal) {
+      setBlobClass("blob-hidden");
+      setIsCalculating(false);
+    }
+   
+  }, [fuelPrice, mpg, liters, cost, distanceTotal, endAdress, startAdress]);
+
+
+    console.log("dist:", distanceTotal)
 
   function handleFuelPrice(e) {
     setFuelPrice(e.target.value);
   }
 
-  function handleMpg(e) {
-    setMpgToLiters((282.48 / e.target.value).toFixed(2));
+  function onPlaceSelectStart(value) {
+    setStartAddress(value.properties.postcode);
+    setStartLon(value.properties.lon);
+    setStartLat(value.properties.lat);
   }
 
-  function calculate() {
-    if (fuelPrice && distance && mpgToLiters) {
-      setCost(
-        (
-          (fuelPrice / 100) *
-          ((distance * 1.609344 * mpgToLiters) / 100)
-        ).toFixed(2)
-      );
-      setLiters(((distance * 1.609344 * mpgToLiters) / 100).toFixed(2));
-    }
+  function onPlaceSelectEnd(value) {
+    setEndAddress(value.properties.postcode);
+    setEndLon(value.properties.lon);
+    setEndLat(value.properties.lat);
   }
+
+  function handleFuelChange(value) {
+    setFuelType(value);
+  }
+
+const geoApifyKey = process.env.REACT_APP_GEOAPIFY;
 
   return (
     <div className="App">
-      <div className="imgLeft"></div>
-      <div className="calculator-container">
-        <Input
-          placeholder="Postcode start"
-          handleChange={(e) => setStartPostcode(e.target.value)}
+      <div className="data-container">
+
+        <div>
+          <h1>Journey Cost Calculator</h1>
+          <p className="description">
+            Enter your start and end postcodes, fuel price, and your vehicle's MPG or L/100km to calculate the cost of your journey.
+          </p>
+        </div>
+        
+        <div className="postcode-inputs">
+          <GeoapifyContext apiKey={geoApifyKey}>
+          
+            <GeoapifyGeocoderAutocomplete
+              placeholder="From"
+              placeSelect={onPlaceSelectStart}
+              key={`start-${postcodeKey}`}
+            />
+        
+          </GeoapifyContext>
+          <GeoapifyContext apiKey={geoApifyKey}>
+            <GeoapifyGeocoderAutocomplete
+              placeholder="To"
+              placeSelect={onPlaceSelectEnd}
+              key={`end-${postcodeKey}`}
+            />
+          </GeoapifyContext>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px"}}>
+          <div className="input-container">
+          <div class="floating-label-group">
+              <input
+                type="number"
+                value={fuelPrice < 0 ? 0 : fuelPrice}
+                onChange={handleFuelPrice}
+                autofocus required
+                min={0}
+              />
+              <label class="floating-label">Fuel price (pence/litre)</label>
+              </div>    
+              <div className="choose">
+              <div className="tabs">
+
+                <input
+                  checked={fuelType === "PETROL"}
+                  name="fuel-tabs"
+                  id="radio-3"
+                  type="radio"
+                  onChange={() => handleFuelChange("PETROL")}
+                />
+                <label htmlFor="radio-3" className="tab">PETROL</label>
+                <input
+                  checked={fuelType === "DIESEL"}
+                  name="fuel-tabs"
+                  id="radio-4"
+                  type="radio"
+                  onChange={() => handleFuelChange("DIESEL")}
+                />
+                <label htmlFor="radio-4" className="tab">DIESEL</label>
+                <span className="glider"></span>
+              </div>
+            </div>     
+          </div>
+
+          <div className="input-container">
+          <div class="floating-label-group">
+            <input
+              type="number"
+              value={unit === "mpg" ? mpg : liters}
+              onChange={handleInputChange}
+              autofocus required
+              min={0}
+            />
+            <label class="floating-label">{unit === "mpg" ? " MPG" : "L/100km"}</label>
+          </div>
+            <div className="choose">
+              <div className="tabs">
+
+                <input
+                  checked={unit === "mpg"}
+                  name="tabs"
+                  id="radio-1"
+                  type="radio"
+                  onChange={() => handleUnitChange("mpg")}
+                />
+                <label htmlFor="radio-1" className="tab">MPG</label>
+                <input
+                  checked={unit === "liters"}
+                  name="tabs"
+                  id="radio-2"
+                  type="radio"
+                  onChange={() => handleUnitChange("liters")}
+                />
+                <label htmlFor="radio-2" className="tab">L/100km</label>
+                <span className="glider"></span>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      
+        <button className="calculate" onClick={handleReset}>Reset</button>
+        
+
+        <h2>{isCalculating ? "Calculating..." : "Results"}</h2>
+        
+        <div className="results">
+
+          <div className="card">
+            <div className="bg">
+              <p>Distance</p>
+              <p>
+                <strong>{cost ? `${distanceTotal} mi` : "---"}</strong>
+              </p>
+              <img src={distanceIco} alt="distance" />
+            </div>
+            <div className={blobClass}></div>
+            
+          </div>
+
+          <div className="card">
+          <div className="bg">
+          <p>Journey Cost</p>
+            <p>
+              <strong>{cost ? `£ ${cost}` : "---"}</strong>
+            </p>
+            <img src={costIco} alt="cost" />
+
+          </div>
+          <div className={blobClass}></div>
+          </div>
+
+          <div className="card">
+          <div className="bg">
+          <p>Fuel Needed</p>
+            <p>
+              <strong>{cost ? `${litersNeeded} L` : "---"}</strong>
+            </p>
+            <img src={gaugeIco} alt="gauge" />
+
+
+          </div>
+          <div className={blobClass}></div>
+          </div>
+          
+
+
+        </div>
+      </div>
+
+      <div className="rigth-container">
+        <MyMap
+          startLat={startLat}
+          startLon={startLon}
+          endLat={endLat}
+          endLon={endLon}
+          startAdress={startAdress}
+          endAdress={endAdress}
+          onMotorwayDistance={setMotorwayDistance}
+          distanceTotal={setDistanceTotal}
         />
-        <Input
-          placeholder="Postcode end"
-          handleChange={(e) => setEndPostcode(e.target.value)}
-        />
-        <button onClick={grabLocation}>Calculate distance</button>
-        <p>Distance: {distance.toFixed(2)} miles</p>
-        <Input
-          type="number"
-          value={fuelPrice}
-          placeholder="Fuel price - pence/ litre"
-          handleChange={handleFuelPrice}
-        />
-        <Input
-          type="number"
-          value={distance}
-          placeholder="Distance in miles"
-          handleChange={handleDistance}
-        />
-        <Input type="number" placeholder="MPG" handleChange={handleMpg} />
-        <button onClick={calculate}>Calculate</button>
-        <p>Journey Cost: {cost} £</p>
-        <p>Liters needed: {liters} L</p>
+        <Dashboard motorwayDistance={motorwayDistance} co2Emissions={co2Emissions} costPerMile={costPerMile} costMotorwayAt60={costMotorwayAt60} costMotorwayAt70={costMotorwayAt70} costMotorwayAt80={costMotorwayAt80} costNonMotorway={costNonMotorway} nonMotorwayDistance={nonMotorwayDistance} />
+       
       </div>
     </div>
   );
 }
 
 export default App;
+
+
