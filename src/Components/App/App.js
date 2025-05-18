@@ -1,6 +1,6 @@
 
 import "./App.css";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { GeoapifyGeocoderAutocomplete, GeoapifyContext } from '@geoapify/react-geocoder-autocomplete';
 import '@geoapify/geocoder-autocomplete/styles/minimal.css';
 import MyMap from "../MyMap";
@@ -36,6 +36,7 @@ function App() {
   const [costMotorwayAt80, setCostMotorwayAt80] = useState(0);
   const [costNonMotorway, setCostNonMotorway] = useState(0);
   const [nonMotorwayDistance, setNonMotorwayDistance] = useState(0);
+  const [ready, setReady] = useState("calculate");
 
  
   const canCalculate = (
@@ -46,6 +47,9 @@ function App() {
     distanceTotal 
   );
 
+  console.log("ready:", canCalculate);
+  
+ 
   
   function handleCalculate() {
     setIsCalculating(true);
@@ -208,7 +212,14 @@ function App() {
     setFuelType(value);
   }
 
-  const geoApifyKey = `${process.env.REACT_APP_GEOAPIFY}`;
+  const geoApifyKey = process.env.REACT_APP_GEOAPIFY;
+
+  useEffect(() => {
+    setReady(distanceTotal ? "ready" : "calculate");
+    if (cost){
+      setReady("calculate")
+    }
+}, [distanceTotal, cost]);
 
   return (
     <div className="App">
@@ -242,7 +253,7 @@ function App() {
                   type="number"
                   value={fuelPrice < 0 ? 0 : fuelPrice}
                   onChange={handleFuelPrice}
-                  autoFocus required
+                  required
                   min={0}
                 />
                 <label className="floating-label">Fuel price (pence/litre)</label>
@@ -276,7 +287,7 @@ function App() {
                 type="number"
                 value={unit === "mpg" ? mpg : liters}
                 onChange={handleInputChange}
-                autoFocus required
+                required
                 min={0}
               />
               <label className="floating-label">{unit === "mpg" ? " MPG" : "L/100km"}</label>
@@ -305,8 +316,8 @@ function App() {
           </div>
         </div>
         <div className="buttons">
-          <button className="calculate" onClick={handleCalculate} disabled={!canCalculate || isCalculating}>
-            {isCalculating ? "Calculating..." : "Calculate"}
+          <button className={ready} onClick={handleCalculate} disabled={!canCalculate || isCalculating}>
+            {!distanceTotal && startAdress && endAdress && fuelPrice && (mpg || liters)? "Please wait, calculating distance..." : "Calculate"}
           </button>
           <button className="reset" onClick={handleReset}>Reset</button>
         </div>
@@ -322,7 +333,7 @@ function App() {
             <div className="bg">
               <p>Distance</p>
               <p>
-                <strong>{cost ? `${distanceTotal} m` : "---"}</strong>
+                <strong>{cost ? `${distanceTotal} mi` : "---"}</strong>
               </p>
               <img src={distanceIco} alt="distance" />
             </div>

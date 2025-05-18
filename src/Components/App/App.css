@@ -98,6 +98,24 @@ button:hover {
   box-shadow: 0 0 5px rgba(52, 152, 219);
 }
 
+button.ready {
+  box-shadow: 0 0 8px 3px #52b6ff, 0 0 24px 1px #4481eb70;
+  animation: glow-button 1.2s ease-in-out infinite alternate;
+  /* background-color: #52b6ff; */
+  /* border: 1px solid #4481eb; */
+}
+
+/* Animation for glowing */
+@keyframes glow-button {
+  0% {
+    box-shadow: 0 0 8px 3px #52b6ff, 0 0 24px 1px #4481eb70;
+  }
+
+  100% {
+    box-shadow: 0 0 18px 7px #52b6ff, 0 0 34px 5px #4481eb90;
+  }
+}
+
 .map-container {
   animation: slideIn 1s ease-out;
   border: 2px solid #bdc3c7;
