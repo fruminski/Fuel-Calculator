@@ -19,13 +19,13 @@ function MyMap({ startLat = 0, startLon = 0, endLat = 0, endLon = 0, startAdress
   
 
   useEffect(() => {
-    // Clean up any previous map instance before creating a new one
+    
     if (mapInstance.current) {
       mapInstance.current.remove();
       mapInstance.current = null;
     }
 
-    // Now safely create the map
+    
     const map = L.map(mapContainer.current).setView([startLat || 51.5, startLon || -0.2], 10);
     mapInstance.current = map;
 
@@ -99,7 +99,7 @@ function MyMap({ startLat = 0, startLon = 0, endLat = 0, endLon = 0, startAdress
         .catch(error => console.error(error));
     }
 
-    // Cleanup function: remove map when component is unmounted or before new map created
+   
     return () => {
       if (mapInstance.current) {
         mapInstance.current.remove();

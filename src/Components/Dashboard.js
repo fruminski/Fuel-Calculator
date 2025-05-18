@@ -1,5 +1,4 @@
 import React, {useState, useEffect} from "react";
-// import "./MoreDetailsContainer.css";
 
 export default function MoreDetailsContainer({
     motorwayDistance,

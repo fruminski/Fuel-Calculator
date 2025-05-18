@@ -42,14 +42,14 @@ function App() {
   // Handle unit change and conversion
   function handleUnitChange(newUnit) {
     if (unit === newUnit) return;
-    // Switch and convert the value
+    
     if (newUnit === "liters" && mpg !== "") {
-      // Convert to L/100km
+      // convert to L/100km
       const newLiters = mpg ? (282.48 / mpg).toFixed(2) : "";
       setLiters(newLiters);
     }
     if (newUnit === "mpg" && liters !== "") {
-      // Convert to MPG
+      // convert to MPG
       const newMpg = liters ? (282.48 / liters).toFixed(2) : "";
       setMpg(newMpg);
     }
@@ -61,7 +61,7 @@ function App() {
     const value = e.target.value;
     if (unit === "mpg") {
       setMpg(value);
-      // Convert dynamically for sync
+     
       if (value !== "") {
         setLiters((282.48 / value).toFixed(2));
       } else {
