@@ -1,6 +1,6 @@
+
 import "./App.css";
-import React, { useEffect } from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { GeoapifyGeocoderAutocomplete, GeoapifyContext } from '@geoapify/react-geocoder-autocomplete';
 import '@geoapify/geocoder-autocomplete/styles/minimal.css';
 import MyMap from "../MyMap";
@@ -8,8 +8,6 @@ import distanceIco from "../../distance.png";
 import costIco from "../../cost.png";
 import gaugeIco  from "../../gauge.png";
 import Dashboard from "../Dashboard";
-
-
 
 function App() {
   const [cost, setCost] = useState(0);
@@ -26,10 +24,11 @@ function App() {
   const [startAdress, setStartAddress] = useState("");
   const [endAdress, setEndAddress] = useState("");
   const [motorwayDistance, setMotorwayDistance] = useState(0);
-  const [blobClass, setBlobClass] = useState("blob-hidden");
   const [postcodeKey, setPostcodeKey] = useState(0);
   const [isCalculating, setIsCalculating] = useState(false);
-  const [fuelType, setFuelType] = useState("PETROL")
+  const [showResults, setShowResults] = useState(false);
+  const [blobClass, setBlobClass] = useState("blob-hidden"); 
+  const [fuelType, setFuelType] = useState("PETROL");
   const [co2Emissions, setCo2Emissions] = useState(0);
   const [costPerMile, setCostPerMile] = useState(0);
   const [costMotorwayAt60, setCostMotorwayAt60] = useState(0);
@@ -37,48 +36,102 @@ function App() {
   const [costMotorwayAt80, setCostMotorwayAt80] = useState(0);
   const [costNonMotorway, setCostNonMotorway] = useState(0);
   const [nonMotorwayDistance, setNonMotorwayDistance] = useState(0);
+
+ 
+  const canCalculate = (
+    fuelPrice && 
+    ((unit === "mpg" && mpg) || (unit === "liters" && liters)) &&
+    startLat !== null && startLon !== null &&
+    endLat !== null && endLon !== null &&
+    distanceTotal 
+  );
+
   
+  function handleCalculate() {
+    setIsCalculating(true);
+    setShowResults(false);
+    setBlobClass("blob"); // 
+
  
-  // Handle unit change and conversion
-  function handleUnitChange(newUnit) {
-    if (unit === newUnit) return;
-    
-    if (newUnit === "liters" && mpg !== "") {
-      // convert to L/100km
-      const newLiters = mpg ? (282.48 / mpg).toFixed(2) : "";
-      setLiters(newLiters);
-    }
-    if (newUnit === "mpg" && liters !== "") {
-      // convert to MPG
-      const newMpg = liters ? (282.48 / liters).toFixed(2) : "";
-      setMpg(newMpg);
-    }
-    setUnit(newUnit);
-  }
+    setTimeout(() => {
  
-  // Handle input change when user types
-  function handleInputChange(e) {
-    const value = e.target.value;
-    if (unit === "mpg") {
-      setMpg(value);
-     
-      if (value !== "") {
-        setLiters((282.48 / value).toFixed(2));
-      } else {
-        setLiters("");
+      const usedLiters = unit === "mpg"
+        ? (mpg !== "" ? (282.48 / mpg) : 0)
+        : (liters !== "" ? liters : 0);
+
+      let totalCost = 0, totalLiters = 0, nmDistance = 0;
+      let cpm = 0, nmLiters = 0, cmw60 = 0, cmw70 = 0, cmw80 = 0;
+
+      if (motorwayDistance === 0 && fuelPrice && distanceTotal && usedLiters) {
+        const distanceKm = (distanceTotal * 1.609344);
+        const litersNeeded = (distanceKm * usedLiters) / 100;
+        setLitersNeeded((litersNeeded).toFixed(2));
+        totalCost = ((fuelPrice / 100) * litersNeeded).toFixed(2);
+        setCost(totalCost);
+        nmDistance = (distanceTotal - motorwayDistance).toFixed(2) || distanceTotal;
+        setNonMotorwayDistance(nmDistance);
+
+        // CO2 emissions
+        const petrolCo2 = 8.9, dieselCo2 = 10.2;
+        let petrolCo2Calculated = ((distanceTotal / mpg) * petrolCo2).toFixed(2);
+        let dieselCo2Calculated = ((distanceTotal / mpg) * dieselCo2).toFixed(2);
+        setCo2Emissions(fuelType === "PETROL" ? petrolCo2Calculated : dieselCo2Calculated);
+
+        cpm = ((totalCost / distanceTotal)).toFixed(2);
+        setCostPerMile(cpm);
+      } 
+      if (fuelPrice && distanceTotal && usedLiters && motorwayDistance) {
+        const townMPG = liters * 1.25;
+        const motorwayMPG = liters * 0.75;
+        // Calculate cost motorway  
+        const mpgAt60 = motorwayMPG;
+        const mpgAt70 = motorwayMPG * 1.09;
+        const mpgAt80 = motorwayMPG * 1.25;
+
+        const nonMotorwayKm = (distanceTotal * 1.609344) - (motorwayDistance * 1.609344);
+        nmDistance = (nonMotorwayKm/1.609344).toFixed(2);
+        setNonMotorwayDistance(nmDistance);
+
+        nmLiters = (nonMotorwayKm * townMPG) / 100;
+        setCostNonMotorway((fuelPrice / 100) * nmLiters);
+
+        const motorwayKm = motorwayDistance * 1.609344;
+        const litersMotorwayAt60 = (motorwayKm * mpgAt60) / 100;
+        const litersMotorwayAt70 = (motorwayKm * mpgAt70) / 100;
+        const litersMotorwayAt80 = (motorwayKm * mpgAt80) / 100;
+
+        cmw60 = (fuelPrice / 100) * litersMotorwayAt60;
+        cmw70 = (fuelPrice / 100) * litersMotorwayAt70;
+        cmw80 = (fuelPrice / 100) * litersMotorwayAt80;
+
+        setCostMotorwayAt60(cmw60);
+        setCostMotorwayAt70(cmw70);
+        setCostMotorwayAt80(cmw80);
+
+        // Calculate total values
+        totalLiters = (litersMotorwayAt70 + nmLiters).toFixed(2);
+        setLitersNeeded(totalLiters);
+        totalCost = ((fuelPrice / 100) * totalLiters).toFixed(2);
+        setCost(totalCost);
+
+        // CO2 emissions
+        const petrolCo2 = 8.9, dieselCo2 = 10.2;
+        let petrolCo2Calculated = ((distanceTotal / mpg) * petrolCo2).toFixed(2);
+        let dieselCo2Calculated = ((distanceTotal / mpg) * dieselCo2).toFixed(2);
+        setCo2Emissions(fuelType === "PETROL" ? petrolCo2Calculated : dieselCo2Calculated);
+
+        cpm = ((totalCost / distanceTotal)).toFixed(2);
+        setCostPerMile(cpm);
       }
-    } else {
-      setLiters(value);
-      if (value !== "") {
-        setMpg((282.48 / value).toFixed(2));
-      } else {
-        setMpg("");
-      }
-    }
+
+      
+      setIsCalculating(false);
+      setShowResults(true);
+      setBlobClass("blob-hidden");
+    }, 900); 
   }
 
-console.log(liters)
- 
+
   function handleReset() {
     setCost(0);
     setFuelPrice("");
@@ -96,8 +149,8 @@ console.log(liters)
     setMotorwayDistance(0);
     setBlobClass("blob-hidden");
     setPostcodeKey(prev => prev + 1);
+    setShowResults(false);
     setIsCalculating(false);
-    setMotorwayDistance(0);
     setCo2Emissions(0);
     setCostPerMile(0);
     setCostMotorwayAt60(0);
@@ -105,143 +158,74 @@ console.log(liters)
     setCostMotorwayAt80(0);
     setCostNonMotorway(0);
     setNonMotorwayDistance(0);
-
   }
 
-  useEffect(() => {
-    
-    const usedLiters = unit === "mpg"
-      ? (mpg !== "" ? (282.48 / mpg) : 0)
-      : (liters !== "" ? liters : 0);
-
-    if (motorwayDistance === 0 && fuelPrice && distanceTotal && usedLiters) {
-      const distanceKm = (distanceTotal * 1.609344);
-      const litersNeeded = (distanceKm * usedLiters) / 100;
-      setLitersNeeded((litersNeeded).toFixed(2));
-      setCost(((fuelPrice / 100) * litersNeeded).toFixed(2));
-
-      setNonMotorwayDistance((distanceTotal - motorwayDistance).toFixed(2) || distanceTotal);
-      
-      console.log("nm:",nonMotorwayDistance)
-      const petrolCo2 = 8.9;
-      const dieselCo2 = 10.2;
-    
-      let petrolCo2Calculated = ((distanceTotal / mpg) * petrolCo2).toFixed(2);
-      let dieselCo2Calculated = ((distanceTotal / mpg) * dieselCo2).toFixed(2);
-      setCo2Emissions(fuelType === "PETROL" ? petrolCo2Calculated : dieselCo2Calculated);
-
-      // Calculate cost per mile
-      const costPerMileCalculated = ((cost / distanceTotal)).toFixed(2);
-      setCostPerMile(costPerMileCalculated);
-    }
   
-    if (fuelPrice && distanceTotal && usedLiters && motorwayDistance) {
-
-      const townMPG = liters * 1.25;
-      const motorwayMPG = liters * 0.75; 
-
-      // Calculate cost motorway
-      
-      const mpgAt60 = motorwayMPG;
-      const mpgAt70 = motorwayMPG * 1.09;
-      const mpgAt80 = motorwayMPG * 1.25;
-
-      const nonMotorwayKm = (distanceTotal * 1.609344) - (motorwayDistance * 1.609344);
-      setNonMotorwayDistance((nonMotorwayKm/1.609344).toFixed(2)); // Set nonMotorwayDistance
-      const nonMotorwayLiters = (nonMotorwayKm * townMPG) / 100;
-      setCostNonMotorway((fuelPrice / 100) * nonMotorwayLiters);
-
-       
-
-      const motorwayKm = motorwayDistance * 1.609344;
-      const litersMotorwayAt60 = (motorwayKm * mpgAt60) / 100;
-      const litersMotorwayAt70 = (motorwayKm * mpgAt70) / 100;
-      const litersMotorwayAt80 = (motorwayKm * mpgAt80) / 100;
-      setCostMotorwayAt60((fuelPrice / 100) * litersMotorwayAt60);
-      setCostMotorwayAt70((fuelPrice / 100) * litersMotorwayAt70);
-      setCostMotorwayAt80((fuelPrice / 100) * litersMotorwayAt80);
-      
-
-      // Calculate total cost
-      
-      // const totalLiters = (litersMotorwayAt70 + nonMotorwayLiters);  
-      setLitersNeeded((litersMotorwayAt70 + nonMotorwayLiters).toFixed(2));
-      setCost(((fuelPrice / 100) * litersNeeded).toFixed(2));
-
-      
-      // Calculate CO2 emissions
-      const petrolCo2 = 8.9;
-      const dieselCo2 = 10.2;
-    
-      let petrolCo2Calculated = ((distanceTotal / mpg) * petrolCo2).toFixed(2);
-      let dieselCo2Calculated = ((distanceTotal / mpg) * dieselCo2).toFixed(2);
-      setCo2Emissions(fuelType === "PETROL" ? petrolCo2Calculated : dieselCo2Calculated);
-
-      // Calculate cost per mile
-      const costPerMileCalculated = ((cost / distanceTotal)).toFixed(2);
-      setCostPerMile(costPerMileCalculated);
-
+  function handleUnitChange(newUnit) {
+    if (unit === newUnit) return;
+    if (newUnit === "liters" && mpg !== "") {
+      const newLiters = mpg ? (282.48 / mpg).toFixed(2) : "";
+      setLiters(newLiters);
     }
-   
-  }, [distanceTotal, fuelPrice, mpg, liters, unit, co2Emissions, fuelType, cost, motorwayDistance, nonMotorwayDistance, costMotorwayAt60, costMotorwayAt70, costMotorwayAt80, costNonMotorway, litersNeeded]);
-
-  useEffect(() => {
-    if (fuelPrice && mpg) {
-      setBlobClass("blob");
-      setIsCalculating(true);
+    if (newUnit === "mpg" && liters !== "") {
+      const newMpg = liters ? (282.48 / liters).toFixed(2) : "";
+      setMpg(newMpg);
     }
-    if (fuelPrice && liters && cost && distanceTotal) {
-      setBlobClass("blob-hidden");
-      setIsCalculating(false);
+    setUnit(newUnit);
+  }
+  function handleInputChange(e) {
+    const value = e.target.value;
+    if (unit === "mpg") {
+      setMpg(value);
+      if (value !== "") {
+        setLiters((282.48 / value).toFixed(2));
+      } else {
+        setLiters("");
+      }
+    } else {
+      setLiters(value);
+      if (value !== "") {
+        setMpg((282.48 / value).toFixed(2));
+      } else {
+        setMpg("");
+      }
     }
-   
-  }, [fuelPrice, mpg, liters, cost, distanceTotal, endAdress, startAdress]);
-
-
-    console.log("dist:", distanceTotal)
-
+  }
   function handleFuelPrice(e) {
     setFuelPrice(e.target.value);
   }
-
   function onPlaceSelectStart(value) {
     setStartAddress(value.properties.postcode);
     setStartLon(value.properties.lon);
     setStartLat(value.properties.lat);
   }
-
   function onPlaceSelectEnd(value) {
     setEndAddress(value.properties.postcode);
     setEndLon(value.properties.lon);
     setEndLat(value.properties.lat);
   }
-
   function handleFuelChange(value) {
     setFuelType(value);
   }
 
-const geoApifyKey = process.env.REACT_APP_GEOAPIFY;
+  const geoApifyKey = `${process.env.REACT_APP_GEOAPIFY}`;
 
   return (
     <div className="App">
       <div className="data-container">
-
         <div>
           <h1>Journey Cost Calculator</h1>
           <p className="description">
             Enter your start and end postcodes, fuel price, and your vehicle's MPG or L/100km to calculate the cost of your journey.
           </p>
         </div>
-        
         <div className="postcode-inputs">
           <GeoapifyContext apiKey={geoApifyKey}>
-          
             <GeoapifyGeocoderAutocomplete
               placeholder="From"
               placeSelect={onPlaceSelectStart}
               key={`start-${postcodeKey}`}
             />
-        
           </GeoapifyContext>
           <GeoapifyContext apiKey={geoApifyKey}>
             <GeoapifyGeocoderAutocomplete
@@ -253,54 +237,52 @@ const geoApifyKey = process.env.REACT_APP_GEOAPIFY;
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "20px"}}>
           <div className="input-container">
-          <div class="floating-label-group">
-              <input
-                type="number"
-                value={fuelPrice < 0 ? 0 : fuelPrice}
-                onChange={handleFuelPrice}
-                autofocus required
-                min={0}
-              />
-              <label class="floating-label">Fuel price (pence/litre)</label>
+            <div className="floating-label-group">
+                <input
+                  type="number"
+                  value={fuelPrice < 0 ? 0 : fuelPrice}
+                  onChange={handleFuelPrice}
+                  autoFocus required
+                  min={0}
+                />
+                <label className="floating-label">Fuel price (pence/litre)</label>
               </div>    
               <div className="choose">
-              <div className="tabs">
-
-                <input
-                  checked={fuelType === "PETROL"}
-                  name="fuel-tabs"
-                  id="radio-3"
-                  type="radio"
-                  onChange={() => handleFuelChange("PETROL")}
-                />
-                <label htmlFor="radio-3" className="tab">PETROL</label>
-                <input
-                  checked={fuelType === "DIESEL"}
-                  name="fuel-tabs"
-                  id="radio-4"
-                  type="radio"
-                  onChange={() => handleFuelChange("DIESEL")}
-                />
-                <label htmlFor="radio-4" className="tab">DIESEL</label>
-                <span className="glider"></span>
-              </div>
-            </div>     
+                <div className="tabs">
+                  <input
+                    checked={fuelType === "PETROL"}
+                    name="fuel-tabs"
+                    id="radio-3"
+                    type="radio"
+                    onChange={() => handleFuelChange("PETROL")}
+                  />
+                  <label htmlFor="radio-3" className="tab">PETROL</label>
+                  <input
+                    checked={fuelType === "DIESEL"}
+                    name="fuel-tabs"
+                    id="radio-4"
+                    type="radio"
+                    onChange={() => handleFuelChange("DIESEL")}
+                  />
+                  <label htmlFor="radio-4" className="tab">DIESEL</label>
+                  <span className="glider"></span>
+                </div>
+              </div>     
           </div>
 
           <div className="input-container">
-          <div class="floating-label-group">
-            <input
-              type="number"
-              value={unit === "mpg" ? mpg : liters}
-              onChange={handleInputChange}
-              autofocus required
-              min={0}
-            />
-            <label class="floating-label">{unit === "mpg" ? " MPG" : "L/100km"}</label>
-          </div>
+            <div className="floating-label-group">
+              <input
+                type="number"
+                value={unit === "mpg" ? mpg : liters}
+                onChange={handleInputChange}
+                autoFocus required
+                min={0}
+              />
+              <label className="floating-label">{unit === "mpg" ? " MPG" : "L/100km"}</label>
+            </div>
             <div className="choose">
               <div className="tabs">
-
                 <input
                   checked={unit === "mpg"}
                   name="tabs"
@@ -320,59 +302,57 @@ const geoApifyKey = process.env.REACT_APP_GEOAPIFY;
                 <span className="glider"></span>
               </div>
             </div>
-            
           </div>
         </div>
-      
-        <button className="calculate" onClick={handleReset}>Reset</button>
-        
+        <div className="buttons">
+          <button className="calculate" onClick={handleCalculate} disabled={!canCalculate || isCalculating}>
+            {isCalculating ? "Calculating..." : "Calculate"}
+          </button>
+          <button className="reset" onClick={handleReset}>Reset</button>
+        </div>
 
-        <h2>{isCalculating ? "Calculating..." : "Results"}</h2>
+        <h2>{isCalculating
+          ? "Calculating..."
+          : showResults ? "Results" : "Please fill in all fields and click Calculate"
+        }</h2>
+        
         
         <div className="results">
-
           <div className="card">
             <div className="bg">
               <p>Distance</p>
               <p>
-                <strong>{cost ? `${distanceTotal} mi` : "---"}</strong>
+                <strong>{cost ? `${distanceTotal} m` : "---"}</strong>
               </p>
               <img src={distanceIco} alt="distance" />
             </div>
             <div className={blobClass}></div>
-            
           </div>
 
           <div className="card">
-          <div className="bg">
-          <p>Journey Cost</p>
-            <p>
-              <strong>{cost ? `£ ${cost}` : "---"}</strong>
-            </p>
-            <img src={costIco} alt="cost" />
-
-          </div>
-          <div className={blobClass}></div>
+            <div className="bg">
+              <p>Journey Cost</p>
+              <p>
+                <strong>{cost ? `£ ${cost}` : "---"}</strong>
+              </p>
+              <img src={costIco} alt="cost" />
+            </div>
+            <div className={blobClass}></div>
           </div>
 
           <div className="card">
-          <div className="bg">
-          <p>Fuel Needed</p>
-            <p>
-              <strong>{cost ? `${litersNeeded} L` : "---"}</strong>
-            </p>
-            <img src={gaugeIco} alt="gauge" />
-
-
+            <div className="bg">
+              <p>Fuel Needed</p>
+              <p>
+                <strong>{cost ? `${litersNeeded} L` : "---"}</strong>
+              </p>
+              <img src={gaugeIco} alt="gauge" />
+            </div>
+            <div className={blobClass}></div>
           </div>
-          <div className={blobClass}></div>
-          </div>
-          
-
-
         </div>
+      
       </div>
-
       <div className="rigth-container">
         <MyMap
           startLat={startLat}
@@ -385,12 +365,9 @@ const geoApifyKey = process.env.REACT_APP_GEOAPIFY;
           distanceTotal={setDistanceTotal}
         />
         <Dashboard motorwayDistance={motorwayDistance} co2Emissions={co2Emissions} costPerMile={costPerMile} costMotorwayAt60={costMotorwayAt60} costMotorwayAt70={costMotorwayAt70} costMotorwayAt80={costMotorwayAt80} costNonMotorway={costNonMotorway} nonMotorwayDistance={nonMotorwayDistance} />
-       
       </div>
     </div>
   );
 }
 
 export default App;
-
-

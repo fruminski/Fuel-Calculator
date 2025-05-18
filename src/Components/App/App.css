@@ -2,6 +2,7 @@
   display: flex;
   overflow: hidden;
   background-color: #ecf0f1;
+  height: 100vh;
 
 }
 
@@ -65,6 +66,14 @@ input:focus {
   width: 100%;
 }
 
+.buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
 button {
   padding: 20px 20px;
   background-color: #3498db;
@@ -75,13 +84,18 @@ button {
   transition: background-color 0.3s;
   font-size: 18px;
   font-weight: bold;
-  box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
-  margin-top: 20px;
+  /* box-shadow: 0 0 5px rgba(52, 152, 219); */
+  width: 50%;
+
+}
+
+.reset {
+  background: #ccc;
+  color: #685e5e;
 }
 
 button:hover {
-  background-color: #2980b9;
-  box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+  box-shadow: 0 0 5px rgba(52, 152, 219);
 }
 
 .map-container {
@@ -496,14 +510,14 @@ img {
     height: 26px;
   }
 
-  .calculate {
+  button {
     font-size: 0.9rem;
     padding: 15px 10px;
     margin-top: 10px;
   }
 
   h2 {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
   }
 
   .card .bg p {
@@ -624,11 +638,11 @@ img {
   }
 
   h2 {
-    font-size: 1.2rem;
-    margin: 0px;
+    font-size: 1rem;
+    margin: 10px;
   }
 
-  .calculate {
+  button {
     font-size: 0.7rem;
     padding: 10px 10px;
     margin-top: 0px;
@@ -690,7 +704,7 @@ img {
     height: auto;
   }
 
-  .calculate {
+  button {
     margin-top: 10px;
 
   }
