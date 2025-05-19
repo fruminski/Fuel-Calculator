@@ -76,8 +76,8 @@ input:focus {
 
 button {
   padding: 20px 20px;
-  background-color: #3498db;
-  color: #fff;
+  background: #ccc;
+  color: #685e5e;
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -86,12 +86,14 @@ button {
   font-weight: bold;
   /* box-shadow: 0 0 5px rgba(52, 152, 219); */
   width: 50%;
+  cursor: not-allowed;
 
 }
 
 .reset {
   background: #ccc;
   color: #685e5e;
+  cursor: pointer;
 }
 
 button:hover {
@@ -101,11 +103,12 @@ button:hover {
 button.ready {
   box-shadow: 0 0 8px 3px #52b6ff, 0 0 24px 1px #4481eb70;
   animation: glow-button 1.2s ease-in-out infinite alternate;
-  /* background-color: #52b6ff; */
-  /* border: 1px solid #4481eb; */
+  background-color: #3498db;
+  color: white;
+  cursor: pointer;
 }
 
-/* Animation for glowing */
+
 @keyframes glow-button {
   0% {
     box-shadow: 0 0 8px 3px #52b6ff, 0 0 24px 1px #4481eb70;

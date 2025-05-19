@@ -38,6 +38,7 @@ function App() {
   const [nonMotorwayDistance, setNonMotorwayDistance] = useState(0);
   const [ready, setReady] = useState("calculate");
 
+
  
   const canCalculate = (
     fuelPrice && 
@@ -47,14 +48,11 @@ function App() {
     distanceTotal 
   );
 
-  console.log("ready:", canCalculate);
-  
- 
   
   function handleCalculate() {
     setIsCalculating(true);
     setShowResults(false);
-    setBlobClass("blob"); // 
+    setBlobClass("blob"); 
 
  
     setTimeout(() => {
@@ -216,10 +214,14 @@ function App() {
 
   useEffect(() => {
     setReady(distanceTotal ? "ready" : "calculate");
+   
     if (cost){
       setReady("calculate")
     }
 }, [distanceTotal, cost]);
+
+
+
 
   return (
     <div className="App">
@@ -317,12 +319,14 @@ function App() {
         </div>
         <div className="buttons">
           <button className={ready} onClick={handleCalculate} disabled={!canCalculate || isCalculating}>
-            {!distanceTotal && startAdress && endAdress && fuelPrice && (mpg || liters)? "Please wait, calculating distance..." : "Calculate"}
+            {!distanceTotal && startLon &&  startLat && endLon && endLat? "Calculating distance..." : "Calculate"}
+           
+    
           </button>
           <button className="reset" onClick={handleReset}>Reset</button>
         </div>
 
-        <h2>{isCalculating
+        <h2 style={{ fontSize: "20px" }}>{isCalculating
           ? "Calculating..."
           : showResults ? "Results" : "Please fill in all fields and click Calculate"
         }</h2>
