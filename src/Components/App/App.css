@@ -325,11 +325,19 @@ img {
   color: #404040;
 }
 
+.floating-label-group input.has-value~.floating-label {
+  top: -15px;
+  bottom: 0px;
+  left: 0px;
+  font-size: 11px;
+  opacity: 1;
+  color: #404040;
+}
+
 .card {
   position: relative;
   width: 30%;
   height: 200px;
-
   border-radius: 14px;
   z-index: 1111;
   overflow: hidden;

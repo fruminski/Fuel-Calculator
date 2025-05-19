@@ -257,6 +257,7 @@ function App() {
                   onChange={handleFuelPrice}
                   required
                   min={0}
+                 
                 />
                 <label className="floating-label">Fuel price (pence/litre)</label>
               </div>    
@@ -291,6 +292,8 @@ function App() {
                 onChange={handleInputChange}
                 required
                 min={0}
+                  className={(unit === "mpg" ? mpg : liters) ? "has-value" : ""}
+
               />
               <label className="floating-label">{unit === "mpg" ? " MPG" : "L/100km"}</label>
             </div>
