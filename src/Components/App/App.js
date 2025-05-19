@@ -133,6 +133,36 @@ function App() {
     }, 900); 
   }
 
+ useEffect(() => {
+ 
+  if (
+    distanceTotal &&
+    ((unit === "mpg" && mpg) || (unit === "liters" && liters))
+  ) {
+    
+    const petrolCo2 = 8.9, dieselCo2 = 10.2;
+    
+    const usedMpg = unit === "mpg"
+      ? parseFloat(mpg)
+      : liters !== ""
+        ? 282.48 / parseFloat(liters)
+        : null;
+    if (usedMpg && distanceTotal) {
+      const petrolCo2Calculated = ((distanceTotal / usedMpg) * petrolCo2).toFixed(2);
+      const dieselCo2Calculated = ((distanceTotal / usedMpg) * dieselCo2).toFixed(2);
+      setCo2Emissions(fuelType === "PETROL" ? petrolCo2Calculated : dieselCo2Calculated);
+    }
+  }
+  
+  if (
+    !distanceTotal ||
+    (!mpg && !liters)
+  ) {
+    setCo2Emissions(0);
+  }
+}, [fuelType, unit, mpg, liters, distanceTotal]);
+
+  console.log(co2Emissions)
 
   function handleReset() {
     setCost(0);
