@@ -160,7 +160,7 @@ function App() {
   ) {
     setCo2Emissions(0);
   }
-}, [fuelType, unit, mpg, liters, distanceTotal]);
+}, [fuelType, unit, mpg, liters, distanceTotal, cost]);
 
   console.log(co2Emissions)
 
@@ -412,7 +412,7 @@ function App() {
           onMotorwayDistance={setMotorwayDistance}
           distanceTotal={setDistanceTotal}
         />
-        <Dashboard motorwayDistance={motorwayDistance} co2Emissions={co2Emissions} costPerMile={costPerMile} costMotorwayAt60={costMotorwayAt60} costMotorwayAt70={costMotorwayAt70} costMotorwayAt80={costMotorwayAt80} costNonMotorway={costNonMotorway} nonMotorwayDistance={nonMotorwayDistance} />
+        <Dashboard motorwayDistance={showResults ? motorwayDistance.toFixed(2) : 0} co2Emissions={showResults ? co2Emissions : 0} costPerMile={costPerMile} costMotorwayAt60={costMotorwayAt60} costMotorwayAt70={costMotorwayAt70} costMotorwayAt80={costMotorwayAt80} costNonMotorway={costNonMotorway} nonMotorwayDistance={nonMotorwayDistance} />
       </div>
     </div>
   );

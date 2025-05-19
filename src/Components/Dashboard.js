@@ -56,7 +56,7 @@ export default function MoreDetailsContainer({
         <div className="additional-info">
         
             <div className="details">
-                <div className="row"><p>Motorway distance:</p><p className="values">{motorwayDistance.toFixed(2)} miles</p></div>
+                <div className="row"><p>Motorway distance:</p><p className="values">{motorwayDistance} miles</p></div>
                 <div className="row"><p>non-Motorway distance:</p><p className="values">{nonMotorwayDistance} miles</p></div>
                 <div className="row"><p>CO₂ emissions:</p><p className="values">{co2Emissions} g/km</p></div>
                 <div className="row"><p>Cost per mile:</p><p className="values">£{costPerMile}</p></div>
