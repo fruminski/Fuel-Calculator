@@ -24,6 +24,9 @@ jobs:
           cd Backend
           npm ci
 
+      - name: Set environment variables
+        run: echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
+
       - name: Validate Prisma schema
         run: |
           cd Backend
