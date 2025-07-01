@@ -23,4 +23,15 @@ model Journey {
   fuelCost Float
   co2 Float
   createdAt DateTime @default(now())
+  userId    Int       //Foreign key
+  user      User  @relation(fields: [userId], references: [id])
+
+}
+
+model User {
+  id        Int    @id @default(autoincrement())
+  name      String
+  email     String @unique
+  password  String
+  journeys  Journey[]
 }
