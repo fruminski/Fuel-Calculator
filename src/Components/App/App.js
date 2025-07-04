@@ -8,6 +8,8 @@ import distanceIco from "../../distance.png";
 import costIco from "../../cost.png";
 import gaugeIco  from "../../gauge.png";
 import Dashboard from "../Dashboard";
+import LoginForm from "./components/LoginForm";
+import JourneyList from "./components/JourneyList";
 
 function App() {
   const [cost, setCost] = useState(0);
@@ -37,6 +39,7 @@ function App() {
   const [costNonMotorway, setCostNonMotorway] = useState(0);
   const [nonMotorwayDistance, setNonMotorwayDistance] = useState(0);
   const [ready, setReady] = useState("calculate");
+  const [user, setUser] = useState(null);
 
 
  
