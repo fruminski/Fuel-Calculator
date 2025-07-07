@@ -18,6 +18,7 @@
 .data-container {
   display: flex;
   flex-direction: column;
+  position: relative  ;
   width: 40%;
   background-color: #ecf0f1;
   gap: 20px;
