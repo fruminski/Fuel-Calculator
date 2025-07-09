@@ -1,5 +1,5 @@
-import { useState } from "react";
-import "./LoginForm.css"; // Optional: Add styling later
+import { useState, useEffect } from "react";
+import "./LoginForm.css";
 
 const LoginForm = ({ onLogin, user }) => {
   const [email, setEmail] = useState("");
@@ -7,6 +7,18 @@ const LoginForm = ({ onLogin, user }) => {
   const [error, setError] = useState("");
   const [mode, setMode] = useState("login");
   const [name, setName] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+
+  // Prefill email if remembered
+  useEffect(() => {
+    const remembered = localStorage.getItem("rememberedEmail");
+    if (remembered) {
+      setEmail(remembered);
+      setRememberMe(true);
+    }
+  }, []);
 
   // Hide form if user is logged in
   if (user) return null;
@@ -28,10 +40,23 @@ const LoginForm = ({ onLogin, user }) => {
       if (!res.ok) throw new Error(data.error || "Something went wrong");
 
       localStorage.setItem("token", data.token);
+      if (rememberMe) {
+        localStorage.setItem("rememberedEmail", email);
+      } else {
+        localStorage.removeItem("rememberedEmail");
+      }
       onLogin(data.user);
     } catch (err) {
       setError(err.message);
     }
+  };
+
+  const handleForgotPassword = (e) => {
+    e.preventDefault();
+    // Here you would call your backend to send a reset email
+    alert(`Password reset link sent to ${forgotEmail}`);
+    setShowForgot(false);
+    setForgotEmail("");
   };
 
   return (
@@ -39,34 +64,72 @@ const LoginForm = ({ onLogin, user }) => {
       <div className="login">
         <h2>Welcome</h2>
         {error && <p style={{ color: "red" }}>{error}</p>}
-        <form className="login-form" onSubmit={handleSubmit}>
-          {mode === "register" && (
+        {!showForgot ? (
+          <form className="login-form" onSubmit={handleSubmit}>
+            {mode === "register" && (
+              <input
+                type="text"
+                placeholder="Name"
+                value={name}
+                required
+                onChange={(e) => setName(e.target.value)}
+              />
+            )}
             <input
-              type="text"
-              placeholder="Name"
-              value={name}
+              type="email"
+              placeholder="Email"
+              value={email}
               required
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
             />
-          )}
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            required
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            required
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <button type="submit">
-            {mode === "login" ? "Log In" : "Create Account"}
-          </button>
-        </form>
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              required
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            {mode === "login" && (
+              <div className="forgotRemember">
+                <div>
+                  <input
+                    type="checkbox"
+                    id="rememberMe"
+                    checked={rememberMe}
+                    onChange={() => setRememberMe((v) => !v)}
+                  />
+                  <label htmlFor="rememberMe">Remember me</label>
+                </div>
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowForgot(true);
+                  }}
+                >
+                  Forgot password?
+                </a>
+              </div>
+            )}
+            <button type="submit">
+              {mode === "login" ? "Log In" : "Create Account"}
+            </button>
+          </form>
+        ) : (
+          <form className="login-form" onSubmit={handleForgotPassword}>
+            <input
+              type="email"
+              placeholder="Enter your email"
+              value={forgotEmail}
+              required
+              onChange={(e) => setForgotEmail(e.target.value)}
+            />
+            <button type="submit">Send reset link</button>
+            <button type="button" onClick={() => setShowForgot(false)}>
+              Back to login
+            </button>
+          </form>
+        )}
         <div className="signUp">
           <p>
             {mode === "login" ? (
