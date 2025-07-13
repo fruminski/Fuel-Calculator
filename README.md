@@ -6,6 +6,8 @@ The Journey Cost Calculator is a React-based application that helps users estima
 
 ---
 
+[![Uptime Status](https://betteruptime.com/status-badges/v1/monitor/<your-monitor-id>.svg)](https://your-status.betteruptime.com)
+
 ## ✨ Features
 
 - 📍 **Postcode-Based Routing** – Enter start and end location to generate a route
