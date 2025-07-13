@@ -51,12 +51,28 @@ const LoginForm = ({ onLogin, user }) => {
     }
   };
 
-  const handleForgotPassword = (e) => {
+  const handleForgotPassword = async (e) => {
     e.preventDefault();
-    // Here you would call your backend to send a reset email
-    alert(`Password reset link sent to ${forgotEmail}`);
-    setShowForgot(false);
-    setForgotEmail("");
+    setError("");
+
+    try {
+      const res = await fetch("http://localhost:5000/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
+
+      alert("Password reset email sent!");
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+    } finally {
+      setShowForgot(false);
+      setForgotEmail("");
+    }
   };
 
   return (
