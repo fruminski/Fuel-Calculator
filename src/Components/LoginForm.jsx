@@ -30,11 +30,14 @@ const LoginForm = ({ onLogin, user }) => {
       mode === "login" ? { email, password } : { name, email, password };
 
     try {
-      const res = await fetch(`http://localhost:5000/auth${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+      const res = await fetch(
+        `https://fuel-calculator.onrender.com/auth${endpoint}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        }
+      );
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
@@ -56,11 +59,14 @@ const LoginForm = ({ onLogin, user }) => {
     setError("");
 
     try {
-      const res = await fetch("http://localhost:5000/auth/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: forgotEmail })
-      });
+      const res = await fetch(
+        "https://fuel-calculator.onrender.com/auth/forgot-password",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: forgotEmail })
+        }
+      );
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
@@ -116,15 +122,13 @@ const LoginForm = ({ onLogin, user }) => {
                   />
                   <label htmlFor="rememberMe">Remember me</label>
                 </div>
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setShowForgot(true);
-                  }}
+                <button
+                  type="button"
+                  className="link-button"
+                  onClick={() => setShowForgot(true)}
                 >
                   Forgot password?
-                </a>
+                </button>
               </div>
             )}
             <button type="submit">

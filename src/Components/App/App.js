@@ -12,7 +12,7 @@ function App() {
     if (token && !user) {
       setUser({ email: "temp@email.com" }); // replace with real logic later
     }
-  }, []);
+  }, [user]);
 
   return (
     <Router>

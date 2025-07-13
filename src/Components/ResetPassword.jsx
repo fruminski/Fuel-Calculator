@@ -21,11 +21,14 @@ const ResetPassword = () => {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, newPassword })
-      });
+      const res = await fetch(
+        "https://fuel-calculator.onrender.com/auth/reset-password",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, newPassword })
+        }
+      );
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Reset failed");

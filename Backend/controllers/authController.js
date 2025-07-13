@@ -87,7 +87,7 @@ const forgotPassword = async (req, res) => {
 
     const resetLink = `http://localhost:3000/reset-password?token=${token}`;
 
-    const { data, error } = await resend.emails.send({
+    const { error } = await resend.emails.send({
       from: process.env.RESEND_FROM,
       to: email,
       subject: "Reset your Journey Cost App password",
