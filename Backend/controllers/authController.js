@@ -85,7 +85,7 @@ const forgotPassword = async (req, res) => {
       expiresIn: "15m"
     });
 
-    const resetLink = `http://localhost:3000/reset-password?token=${token}`;
+    const resetLink = `https://journeycost-dev.netlify.app/reset-password?token=${token}`;
 
     const { error } = await resend.emails.send({
       from: process.env.RESEND_FROM,
